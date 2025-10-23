@@ -71,48 +71,58 @@ def func2(ss, start, end, criteria):
     expression_pass = []
     # 儲存數值的差距
     num_distance_list = []
+    # 紀錄比對的條件
+    operation_symbols = ""
 
     # 先將比對的字串轉為可以判斷的內容
+    split_criteria = None
     if ">=" in criteria:           
         split_criteria = criteria.split(">=")
         compare_A = split_criteria[0]
-        if compare_A != "name":
-            compare_B = float(split_criteria[1])
-        else:
-            compare_B = split_criteria[1]
+        operation_symbols = ">="
+
     if "<=" in criteria and compare_A == "":
         split_criteria = criteria.split("<=")
         compare_A = split_criteria[0]
-        if compare_A != "name":
-            compare_B = float(split_criteria[1])
-        else:
-            compare_B = split_criteria[1]  
+        operation_symbols = "<="
+
     if "=" in criteria  and compare_A == "":
         split_criteria = criteria.split("=")
         compare_A = split_criteria[0]
-        if compare_A != "name":
+        
+    if compare_A != "name":
             compare_B = float(split_criteria[1])
-        else:
-            compare_B = split_criteria[1]  
+    else:
+            compare_B = split_criteria[1]
+
 
     # 確認要判斷的物件是否不為name，若為name，就直接判斷對應的services
     if compare_A != "name":
         for i in range(service_len):
-            num_distance = ss[i][compare_A] - compare_B
-            if num_distance < 0:
-                num_distance = -(num_distance)
-                    
-            list_idx = 0
-            if num_distance_list != []:
-                for k in range(len(num_distance_list)):
-                    if num_distance_list[k] < num_distance:
-                        list_idx = list_idx+1
-                num_distance_list.insert(list_idx, num_distance)
-            else:
-                num_distance_list.append(num_distance)                                   
+            num_distance = None
+            if operation_symbols == ">=":
+                if ss[i][compare_A] >= compare_B:
+                    num_distance = ss[i][compare_A] - compare_B
+            if operation_symbols == "<=":
+                if ss[i][compare_A] <= compare_B:
+                    num_distance = ss[i][compare_A] - compare_B
+            
+            # 比對之後有符合的，才會進行差距的計算，並判斷從差距最小排到差距最大
+            if num_distance != None:
+                if num_distance < 0:
+                    num_distance = -(num_distance)
                         
-            # 已按照差距最小到差距最大排列
-            expression_pass.insert(list_idx, ss[i]["name"])         
+                list_idx = 0
+                if num_distance_list != []:
+                    for k in range(len(num_distance_list)):
+                        if num_distance_list[k] < num_distance:
+                            list_idx = list_idx+1
+                    num_distance_list.insert(list_idx, num_distance)
+                else:
+                    num_distance_list.append(num_distance)                                   
+                            
+                # 已按照差距最小到差距最大排列
+                expression_pass.insert(list_idx, ss[i]["name"])       
     elif compare_A == "name":
         expression_pass.append(compare_B)
           
@@ -123,21 +133,26 @@ def func2(ss, start, end, criteria):
         start_num += 1
         time.append(start_num)
 
-    # 判斷時間是否都沒被預訂走
-    time_warm = 0
+    best_match_services = None
     for key in expression_pass:
+        # 判斷時間是否都沒被預訂走，每一個services都要重新計算時間是否沒有撞到
+        time_warm = 0
         for j in range(len(time)):
             if time[j] in services_time[key]:
                 time_warm += 1
                 break
 
         if time_warm == 0:
+            best_match_services = key
             services_time[key].extend(time) # 將預約的時間新增至list中，藉此後續判斷是否被約走了
             print(key)
             break
-        if time_warm > 0:
-            print("Sorry")
-            break
+
+    # 如果每一個符合的services，與對應的時間都已被預約，就會印出sorry的字樣
+    if best_match_services == None:
+        print("Sorry")
+
+
 
 services=[
 {"name":"S1", "r":4.5, "c":1000},
@@ -151,6 +166,7 @@ func2(services, 15, 18, "r>=4.5") # S1
 func2(services, 16, 18, "r>=4") # Sorry
 func2(services, 13, 17, "name=S1") # Sorry
 func2(services, 8, 9, "c<=1500") # S2
+func2(services, 8, 9, "c<=1500") # S1
 print("===============================================================================")
 
 

@@ -90,11 +90,15 @@ function func2(ss, start, end, criteria){
     let expression_pass = [];
     // 儲存數值的差距
     let num_distance_list = [];
+    // 紀錄比對的條件
+    let operation_symbols = "";
 
     // 先將比對的字串轉為可以判斷的內容
+    let split_criteria = null;
     if (criteria.includes(">=")){           
         let split_criteria = criteria.split(">=");
         compare_A = split_criteria[0];
+        operation_symbols = ">=";
         if (compare_A != "name"){
             compare_B = parseFloat(split_criteria[1]);
         }
@@ -106,6 +110,7 @@ function func2(ss, start, end, criteria){
     if (criteria.includes("<=") && compare_A == ""){
         split_criteria = criteria.split("<=");
         compare_A = split_criteria[0];
+        operation_symbols = "<=";
         if (compare_A != "name"){
             compare_B = parseFloat(split_criteria[1]);
         }
@@ -128,28 +133,44 @@ function func2(ss, start, end, criteria){
     // 確認要判斷的物件是否不為name，若為name，就直接判斷對應的services
     if (compare_A != "name"){
         for (let i=0; i < service_len; i++){
-            num_distance = ss[i][compare_A] - compare_B
-            if (num_distance < 0){
-                num_distance = -(num_distance)
-            }
-                    
-            let list_idx = 0;
-            if (num_distance_list != []){
-                for (let k =0; k < num_distance_list.length; k++){
-                    if (num_distance_list[k] < num_distance){
-                        list_idx += 1;
-                        //console.log(list_idx);
-                    }
+            let num_distance = null;
+            // 找出符合的services，並進行計算
+            if (operation_symbols === ">="){
+                if (ss[i][compare_A] >= compare_B){
+                    num_distance = ss[i][compare_A] - compare_B;
                 }
-                num_distance_list.splice(list_idx, 0,num_distance);
             }
-            else{
-                num_distance_list.push(num_distance);  
-            }          
-             
-            // 已按照差距最小到差距最大排列
-            expression_pass.splice(list_idx, 0, ss[i]["name"]);
-            //console.log(expression_pass);   
+
+            if (operation_symbols === "<="){
+                if (ss[i][compare_A] <= compare_B){
+                    num_distance = ss[i][compare_A] - compare_B;
+                }
+            }
+            
+            // 如果有符合的才會有差距值，然後在這一塊判斷從最符合到符合的方式排序
+            if (num_distance != null){
+                if (num_distance < 0){
+                    num_distance = -(num_distance)
+                }
+                        
+                let list_idx = 0;
+                if (num_distance_list != []){
+                    for (let k =0; k < num_distance_list.length; k++){
+                        if (num_distance_list[k] < num_distance){
+                            list_idx += 1;
+                            //console.log(list_idx);
+                        }
+                    }
+                    num_distance_list.splice(list_idx, 0,num_distance);
+                }
+                else{
+                    num_distance_list.push(num_distance);  
+                }          
+                
+                // 已按照差距最小到差距最大排列
+                expression_pass.splice(list_idx, 0, ss[i]["name"]);
+                //console.log(expression_pass);  
+            } 
         }      
     }
     else if (compare_A == "name"){
@@ -164,9 +185,10 @@ function func2(ss, start, end, criteria){
         time.push(start_num);
     }
 
-    // 判斷時間是否都沒被預訂走
-    let time_warm = 0;
+    let best_match_services = null;
     for (let l=0; l < expression_pass.length; l++){
+        // 判斷時間是否都沒被預訂走
+        let time_warm = 0;
         for (let j=0; j < time.length; j++){
             if (services_time[expression_pass[l]].includes(time[j])){
                 time_warm += 1;
@@ -175,14 +197,16 @@ function func2(ss, start, end, criteria){
         }
 
         if (time_warm == 0){
+            best_match_services = expression_pass[l];
             services_time[expression_pass[l]].push(...time); // 將預約的時間新增至list中，藉此後續判斷是否被約走了
             console.log(expression_pass[l]);
             break;
         }
-        if (time_warm > 0){
-            console.log("Sorry");
-            break;
-        }
+    }
+
+    // 如果每一個符合的services，與對應的時間都已被預約，就會印出sorry的字樣
+    if (best_match_services === null){
+        console.log("Sorry");
     }
     
 }
@@ -198,6 +222,7 @@ func2(services, 15, 18, "r>=4.5"); // S1
 func2(services, 16, 18, "r>=4"); // Sorry
 func2(services, 13, 17, "name=S1"); // Sorry
 func2(services, 8, 9, "c<=1500"); // S2
+func2(services, 8, 9, "c<=1500"); // S1
 console.log("===============================================================================");
 
 
