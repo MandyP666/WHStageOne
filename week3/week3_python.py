@@ -112,7 +112,7 @@ def func1():
                     content_line = hotelList[_idEn][1] + ","+ enName + "," + hotelList[_idEn][2] + "," + enAddress + enTel + "," + roomNum + "\n"
                 f.write(content_line)
       
-func1()
+#func1()
 
 
 
@@ -140,33 +140,35 @@ class BS4Web:
 
             for item in titleDiv:
                 titleAhref = item.get_text(strip=True)  # 取得標籤中的內容(文字)
-                # 進到文章的網頁進行取得時間與like數量
-                if isinstance(item, int):
-                    continue
-                urlArticle = "https://www.ptt.cc/" + item.find('a')['href']
-                with urllib.request.urlopen(urlArticle) as content:
-                    # 讀取網頁的回應的內容
-                    articleContent = content.read().decode('utf-8-sig')
-                # 使用html.parser解析器解析網頁架構
-                articleHtmlDOM = BeautifulSoup(articleContent, "html.parser")
-                pushTag = articleHtmlDOM.find_all('span', class_="hl push-tag")
-                timeTag = articleHtmlDOM.find_all('span', class_="article-meta-value")
-                if timeTag == []:
-                    timeTag = articleHtmlDOM.find_all('span', class_="b4")
-                    
-                timeStr = timeTag[-1].get_text()
-                if timeStr[0] == " ":
-                    timeStr= timeStr[1:]
-                    
-                # print(str(len(pushTag)))
-                # print(timeStr)
-                # print(titleAhref)
-                timeFormat = self.timeFormatIsTrueOrNot(timeStr)
-            
-                if timeFormat:
-                    with open('articles.csv', 'a', encoding='utf-8') as f:
-                        content = titleAhref + "," + str(len(pushTag)) + "," + timeStr + "\n"
-                        f.write(content)
+                if "本文已被刪除" not in titleAhref:
+                    # 進到文章的網頁進行取得時間與like數量
+                    if isinstance(item, int):
+                        continue
+                    urlArticle = "https://www.ptt.cc/" + item.find('a')['href']
+                    with urllib.request.urlopen(urlArticle) as content:
+                        # 讀取網頁的回應的內容
+                        articleContent = content.read().decode('utf-8-sig')
+                    # 使用html.parser解析器解析網頁架構
+                    articleHtmlDOM = BeautifulSoup(articleContent, "html.parser")
+                    pushTag = articleHtmlDOM.find_all('span', class_="hl push-tag")
+                    timeTag = articleHtmlDOM.find_all('span', class_="article-meta-value")
+                    if timeTag == []:
+                        timeTag = articleHtmlDOM.find_all('span', class_="b4")
+                        
+                    timeStr = timeTag[-1].get_text()
+                    if timeStr[0] == " ":
+                        timeStr= timeStr[1:]
+                        
+                    # print(str(len(pushTag)))
+                    # print(timeStr)
+                    # print(titleAhref)
+                    timeFormat = self.timeFormatIsTrueOrNot(timeStr)
+                
+                    if timeFormat:
+                        with open('articles.csv', 'a', encoding='utf-8') as f:
+                            content = titleAhref + "," + str(len(pushTag)) + "," + timeStr + "\n"
+                            f.write(content)
+
 
     def findURLOfThreePages(self):
         urlArticleTotal= "https://www.ptt.cc/bbs/Steam/index.html"
