@@ -112,7 +112,7 @@ def func1():
                     content_line = hotelList[_idEn][1] + ","+ enName + "," + hotelList[_idEn][2] + "," + enAddress + enTel + "," + roomNum + "\n"
                 f.write(content_line)
       
-#func1()
+func1()
 
 
 
